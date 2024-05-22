@@ -1,0 +1,32 @@
+# Python
+*.pyc
+*.pyo
+__pycache__/
+
+# Virtual Environment
+venv/
+env/
+# IDE/Editor Files
+.vscode/
+.idea/
+.env
+*.swp
+
+# Django Migration Files
+migrations.py/
+migrations/
+
+# Local Settings
+local_settings.py
+
+# Compiled Python files
+*.pyc
+.python-version
+# Database (if you are using SQLite)
+*.db
+
+# Static files (use collectstatic to gather static files from apps)
+static/
+
+# Media files (use django-storages or similar to handle media storage)
+media/
