@@ -103,3 +103,16 @@ class Document(models.Model):
 
     def __str__(self):
         return self.title
+
+class TodoItem(models.Model):
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    uploaded_file=models.FileField(upload_to='filess')
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE,related_name='userR')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    delivery_date = models.DateField(null=True, blank=True)
+
+
+    def __str__(self):
+        return self.title
