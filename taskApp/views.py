@@ -5,9 +5,10 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from rest_framework.response import Response
 from django.contrib.auth import authenticate, login
 from django.db import IntegrityError
-from .models import UserRole
+from .models import UserRole,TodoItem
 from taskApp.models import User,Document
 #from .serializers import UserRoleSerializer,DocumentSerializer,UserSerializer,MyTokenObtainPairSerializer
+from .serializers import UserRoleSerializer,TodoItemSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.decorators import login_required
 from rest_framework import generics
@@ -183,8 +184,8 @@ class UserLoginAPIView(APIView):
 
 #Create and List 
 class TodoItemListCreate(generics.ListCreateAPIView):
-    #queryset = TodoItem.objects.all()
-    #serializer_class = TodoItemSerializer
+    queryset = TodoItem.objects.all()
+    serializer_class = TodoItemSerializer
     permission_classes = [IsAuthenticated,IsAdminOrStaff]
 
     #pagination_class=CustomPagination
@@ -194,19 +195,20 @@ class TodoItemListCreate(generics.ListCreateAPIView):
     #search_fields=['title']
 
     def perform_create(self, serializer):
-        current_user = self.request
-        user_role = UserRole.objects.get(user=current_user.user)
-        print("#############################")
-        print(user_role)
-        print("#############################")
+        token = self.request.auth
+        email=token['email']
+        obj = User.objects.filter(email=email).last()
+        user_role=obj.role_id
+        print(obj)
+        print(f"#############9999999999999999999999999999999999999999999999################ {user_role}")
 
 
 
         # Pass request to serializer's context
-        serializer.save(created_by=user_role)
+        serializer.save(created_by=obj)
 #Retrive update and Delete
 class TodoItemRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
-    #queryset = TodoItem.objects.all()
-    #serializer_class = TodoItemSerializer
+    queryset = TodoItem.objects.all()
+    serializer_class = TodoItemSerializer
     permission_classes = [IsAdminOrStaff]
     

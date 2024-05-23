@@ -1,11 +1,17 @@
 from rest_framework import permissions
-from taskApp.models import UserRole
+from taskApp.models import UserRole,User
 
 class IsAdminOrStaff(permissions.BasePermission):
 
     def has_permission(self, request, view):
         try:
-            user_role = UserRole.objects.get(user=request.user)
+            token=request.auth
+            email=token['email']
+
+            obj = User.objects.filter(email=email).last()
+            user_role=obj.role
+            print(f"Auth token from permissiiiiiiiiion############################### {user_role}")
+
             print(f"UserRole : {user_role}")
         except UserRole.DoesNotExist:
             return False
