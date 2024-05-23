@@ -109,6 +109,7 @@ class TodoItem(models.Model):
     description = models.TextField(null=True, blank=True)
     uploaded_file=models.FileField(upload_to='filess', null=True, blank=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE,related_name='userR')
+    updated_by = models.ForeignKey(User, on_delete=models.CASCADE,null=True, blank=True,related_name='userRr')
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
     delivery_date = models.DateField(null=True, blank=True)
@@ -116,3 +117,5 @@ class TodoItem(models.Model):
 
     def __str__(self):
         return self.title
+    class Meta:
+        ordering = ['-created_at']

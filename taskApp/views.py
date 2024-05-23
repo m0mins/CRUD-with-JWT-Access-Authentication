@@ -1,5 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view
+from django.http.response import JsonResponse
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
@@ -8,7 +9,7 @@ from django.db import IntegrityError
 from .models import UserRole,TodoItem
 from taskApp.models import User,Document
 #from .serializers import UserRoleSerializer,DocumentSerializer,UserSerializer,MyTokenObtainPairSerializer
-from .serializers import UserRoleSerializer,TodoItemSerializer
+from .serializers import UserRoleSerializer,TodoItemSerializer,TodoItemDetailsSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.decorators import login_required
 from rest_framework import generics
@@ -20,24 +21,17 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 # Create your views here.
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
+from .pagination import MyPageNumberPagination
+paginator = MyPageNumberPagination()
 
-#class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
-#    @classmethod
-#    def get_token(cls, user):
-#        token = super().get_token(user)
-#
-#        # Add custom claims
-#        token['email'] = user.email
-#
-#        return token
 from rest_framework_simplejwt.tokens import RefreshToken
+
+
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
-    #refresh.access_token['email']=user.email
     access = refresh.access_token
     access['email'] = user.email
-    #access['role'] = user.role
     return {
         #'refresh': str(refresh),
         'access': str(access),
@@ -71,49 +65,20 @@ class UserRegistrationAPIView(APIView):
 
         try:
             user_role = UserRole.objects.get(role=role)
-            #user_role, created = UserRole.objects.get_or_create(role=role)
             user = User.objects._create_user(email=email, password=password, role=user_role)
 
-            #user = User.objects._create_user(email=email, password=password,role=user_role)
             user.save()
             refresh=get_tokens_for_user(user)
             print(f"refresh token : {refresh}")
             #refresh = str(RefreshToken.for_user(user))
             return Response({'message': 'User registered successfully'})
-        #except UserRole.DoesNotExist:
-            #return Response(data={'error': 'Role does not exist'}, status=400)
+        except UserRole.DoesNotExist:
+            return Response(data={'error': 'Role does not exist'}, status=400)
 
-            #if created:
-            #    return Response({'message': 'User registered successfully with a new role'})
-            #else:
-            #    return Response({'message': 'User registered successfully with existing role'})
 
-        #except Exception as e:
         except Exception as e:
             return Response(data={'error': e.args}, status=500)
-
-#Login
-
-
-#class UserLoginAPIView(APIView):
-#    def post(self, request):
-#        email = request.data.get('email')
-#        password = request.data.get('password')
-#        user = authenticate(request, email=email, password=password)
-#
-#        if user is not None:
-#            login(request, user)
-#            refresh = RefreshToken.for_user(user)
-#            # Here you're returning the access token as a string
-#            # If you want to include the role and email, you can return the token itself
-#            access_token = MyTokenObtainPairSerializer.get_token(user)
-#            return Response({
-#                'message': 'Login successful',
-#                'access': str(access_token),  # No need to convert to string
-#            })
-#        else:
-#            return Response({'message': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
-
+        
 class UserLoginAPIView(APIView):
     def post(self, request):
         email = request.data.get('email')
@@ -137,52 +102,8 @@ class UserLoginAPIView(APIView):
             return Response({'message': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
     
 
-#Create and List 
-#class DocumentListCreate(generics.ListCreateAPIView):
-#    queryset = Document.objects.all()
-#    serializer_class = DocumentSerializer
-#    permission_classes = [IsAuthenticated,IsAdminOrStaff]
-#
-#    #pagination_class=CustomPagination
-#
-#    #for filter
-#    #filter_backends=[SearchFilter]
-#    #search_fields=['title']
-#
-#    def perform_create(self, serializer):
-#        current_user = self.request
-#        print(f"#############{current_user}****************")
-#        user_role = User.objects.get(user=current_user)
-#        print("#############################")
-#        print(user_role)
-#        print("#############################")
-#
-#        # Pass request to serializer's context
-#        serializer.save(user=user_role)
-#
-#
-#
-#class UserRegistrationAPIView(APIView):
-#    def post(self, request):
-#        data = request.data
-#        email = data.get('email')
-#        password = data.get('password')
-#        role = data.get('role','is_user')
-#
-#
-#        try:
-#            user_role = UserRole.objects.get(role=role)
-#            user = User.objects._create_user(email=email, password=password, role=user_role)
-#
-#            user.save()
-#            refresh = str(RefreshToken.for_user(user))
-#            return Response({'message': 'User registered successfully'})
-#
-#
-#        except Exception as e:
-#            return Response(data={'error': e.args}, status=500)
+#using Generic -----Start----------------APIVIEW---------------------------Start---------------------------------------------
 
-#Create and List 
 class TodoItemListCreate(generics.ListCreateAPIView):
     queryset = TodoItem.objects.all()
     serializer_class = TodoItemSerializer
@@ -199,10 +120,6 @@ class TodoItemListCreate(generics.ListCreateAPIView):
         email=token['email']
         obj = User.objects.filter(email=email).last()
         user_role=obj.role_id
-        print(obj)
-        print(f"#############9999999999999999999999999999999999999999999999################ {user_role}")
-
-
 
         # Pass request to serializer's context
         serializer.save(created_by=obj)
@@ -211,4 +128,88 @@ class TodoItemRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = TodoItem.objects.all()
     serializer_class = TodoItemSerializer
     permission_classes = [IsAdminOrStaff]
-    
+#using Generic -----End----------------APIVIEW---------------------------End---------------------------------------------
+
+
+
+
+
+#using APIVIEW -----Start----------------APIVIEW---------------------------Start---------------------------------------------
+class TodoItemDetail(APIView):
+    permission_classes = [IsAuthenticated, IsAdminOrStaff]
+
+    def post(self, request):
+        data=request.data
+        serializer = TodoItemSerializer(data=data)
+        if serializer.is_valid():
+            token = request.auth
+            email = token['email']
+            obj = User.objects.filter(email=email).last()
+            serializer.save(created_by=obj)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+    def get(self, request):
+        id=request.GET.get("id" or None)
+        page=request.GET.get("page" or None)
+        limit=request.GET.get("limit" or None)
+        #query=TodoItem.objects.filter(id=id).last()
+        if id:
+            try:
+                query = TodoItem.objects.get(id=id)
+                #serializer = TodoItemSerializer(todo_item)
+                serializer = TodoItemDetailsSerializer(query)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            except TodoItem.DoesNotExist:
+                #return Response({'Error':'status=status.HTTP_404_NOT_FOUND})
+                    return JsonResponse({"status":status.HTTP_404_NOT_FOUND,"success":False,"message":"Data not found!", "results":{}})
+        else:
+            queryset = TodoItem.objects.all()
+            count=len(queryset)
+            result_page = paginator.paginate_queryset(queryset,request)
+            if result_page is not None:
+                serializer = TodoItemDetailsSerializer(result_page, many=True)
+                #serializer = TodoItemSerializer(result_page, many=True)
+
+                result = {
+                    "status":status.HTTP_200_OK,
+                    "success": True,
+                    "message": "Visit record fetched successfully!",
+                    "results": serializer.data,
+                    "count": count,
+                    "page":page,
+                    "limit":limit,
+                }
+            
+                return Response(result)
+
+            else:
+            
+                return JsonResponse({"status":status.HTTP_404_NOT_FOUND,"success":False,"message":"Data not found!", "results":{}})
+    def put(self, request, id=None):
+        token = request.auth
+        email = token['email']
+        updated_by = User.objects.filter(email=email).last()
+        try:
+            query = TodoItem.objects.filter(pk=id).last()
+        except TodoItem.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = TodoItemDetailsSerializer(query, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save(updated_by=updated_by)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+    def delete(self, request):
+        id=request.GET.get("id" or None)
+        try:
+            query = TodoItem.objects.get(pk=id)
+        except TodoItem.DoesNotExist:
+            return Response({'error': 'Todo item not found'}, status=status.HTTP_404_NOT_FOUND)        
+        query.delete()
+        return Response({'message': 'Deleted Successfully'}, status=status.HTTP_204_NO_CONTENT)
+#using APIVIEW -----End----------------APIVIEW---------------------------End---------------------------------------------

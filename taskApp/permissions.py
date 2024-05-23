@@ -10,9 +10,7 @@ class IsAdminOrStaff(permissions.BasePermission):
 
             obj = User.objects.filter(email=email).last()
             user_role=obj.role
-            print(f"Auth token from permissiiiiiiiiion############################### {user_role}")
 
-            print(f"UserRole : {user_role}")
         except UserRole.DoesNotExist:
             return False
 
