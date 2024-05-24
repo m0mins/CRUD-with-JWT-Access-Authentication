@@ -9,11 +9,11 @@ from django.db import IntegrityError
 from .models import UserRole,TodoItem
 from taskApp.models import User,Document
 #from .serializers import UserRoleSerializer,DocumentSerializer,UserSerializer,MyTokenObtainPairSerializer
-from .serializers import UserRoleSerializer,TodoItemSerializer,TodoItemDetailsSerializer
+from .serializers import UserRoleSerializer,TodoItemSerializer,TodoItemDetailsSerializer,UserSerializer,UserDetailsSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.decorators import login_required
 from rest_framework import generics
-from .permissions import IsAdminOrStaff
+from .permissions import IsSuperOrAdminOrStaff,IsSuperUser
 from rest_framework.filters import SearchFilter
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -107,7 +107,7 @@ class UserLoginAPIView(APIView):
 class TodoItemListCreate(generics.ListCreateAPIView):
     queryset = TodoItem.objects.all()
     serializer_class = TodoItemSerializer
-    permission_classes = [IsAuthenticated,IsAdminOrStaff]
+    permission_classes = [IsAuthenticated,IsSuperOrAdminOrStaff]
 
     #pagination_class=CustomPagination
 
@@ -127,7 +127,7 @@ class TodoItemListCreate(generics.ListCreateAPIView):
 class TodoItemRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = TodoItem.objects.all()
     serializer_class = TodoItemSerializer
-    permission_classes = [IsAdminOrStaff]
+    permission_classes = [IsSuperOrAdminOrStaff]
 #using Generic -----End----------------APIVIEW---------------------------End---------------------------------------------
 
 
@@ -136,7 +136,7 @@ class TodoItemRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
 
 #using APIVIEW -----Start----------------APIVIEW---------------------------Start---------------------------------------------
 class TodoItemDetail(APIView):
-    permission_classes = [IsAuthenticated, IsAdminOrStaff]
+    permission_classes = [IsAuthenticated, IsSuperOrAdminOrStaff]
 
     def post(self, request):
         data=request.data
@@ -195,8 +195,7 @@ class TodoItemDetail(APIView):
         try:
             query = TodoItem.objects.filter(pk=id).last()
         except TodoItem.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        
+            return Response({'error': 'Todo item not found'}, status=status.HTTP_404_NOT_FOUND)                
         serializer = TodoItemDetailsSerializer(query, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save(updated_by=updated_by)
@@ -213,3 +212,24 @@ class TodoItemDetail(APIView):
         query.delete()
         return Response({'message': 'Deleted Successfully'}, status=status.HTTP_204_NO_CONTENT)
 #using APIVIEW -----End----------------APIVIEW---------------------------End---------------------------------------------
+
+
+class UserRoleUpdate(APIView):
+    permission_classes = [IsAuthenticated, IsSuperUser]
+
+
+    def put(self, request, id=None):
+        token = request.auth
+        email = token['email']
+        updated_by = User.objects.filter(email=email).last()
+        try:
+            query = User.objects.filter(pk=id).last()
+
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)        
+
+        serializer = UserDetailsSerializer(query, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save(updated_by=updated_by)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

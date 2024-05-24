@@ -9,6 +9,34 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = '__all__'
+
+class UserDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'
+        #read_only_fields = ['email']
+
+    def to_representation(self, instance):
+
+        try:
+            get_user=instance.role
+            print(f"###################Role *********************88 {get_user}")
+
+            serializer = UserRoleSerializer(get_user)
+            user_info = serializer.data
+            role=user_info['role']
+        except:
+            role={}
+        role_info = {
+            "id": instance.id,
+            "email": instance.email,
+            "role": role,
+
+        }
+        return role_info
+
+
+
 class TodoItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = TodoItem
