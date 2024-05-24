@@ -16,11 +16,11 @@
 2. Create a Super User and update it's role id
 3. Every User will be registered as a user
 4. Here has been added JWT Token for Authentication
-4. Only Super user can update user role
-5. Super user able to do everything  (create,update,delete,details) for TODO task
-6. Admin also can everything except Delete
-7. Staff able to do update and details the TODO task
+4. Only Super user able to update user role
+5. Super user able to do everything  (create,update,delete,details) of TODO task
+6. Admin also can everything of TODO task except Delete
+7. Staff able to do update and details of TODO task
 8. Others user only can Read the tasks
 9. Here has been added pagination
-10. When someone trying to see the list of task , of course have to provide page and limit in params
+10. When someone trying to see the list of tasks , of course has to provide page and limit in params
  
