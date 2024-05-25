@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenVerifyView
 from taskApp import views
-from .views import UserRegistrationAPIView,UserLoginAPIView,TodoItemListCreate,TodoItemRetrieveUpdateDestroy,TodoItemDetail,UserRoleUpdate
+from .views import UserRegistrationAPIView,UserLoginAPIView,TodoItemListCreate,TodoItemRetrieveUpdateDestroy,TodoItemDetail,UserRoleUpdate,DataBackUpAPI
 
 #from rest_framework_simplejwt.views import (
 #    TokenRefreshView,
@@ -38,6 +38,9 @@ urlpatterns = [
 #using APIVIEW -----End------------
 
     path('role_update/<int:id>/',UserRoleUpdate.as_view(),name='role_update'),
+
+#Database Migration ################################3
+    path('dataBackUp/',DataBackUpAPI.as_view(),name='dataBackUp'),
 
 
 

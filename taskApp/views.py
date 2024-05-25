@@ -233,3 +233,38 @@ class UserRoleUpdate(APIView):
             serializer.save(updated_by=updated_by)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+################## Database Migration ######################################################
+class DataBackUpAPI(APIView):
+    def post(self,request,format=None):
+        try:
+            data_list=request.data
+
+            for data in data_list:
+                    #if isinstance(data['business'], int):
+                    #    data['business_id']=data['business']                
+                try:
+                    if isinstance(data['business_id'], int):
+                        data['business_id']=data['business_id']
+                    else:
+                        data['business_id']=0
+                except Exception as e:
+                    print("hello")
+            data_backup_serializers = CallSerializer(data=data_list, many=True, context={'request': request})
+
+            if data_backup_serializers.is_valid(raise_exception=True):
+                data_backup_serializers.save()
+                return JsonResponse({"success": True,"status":status.HTTP_201_CREATED,"results":data_backup_serializers.data})               
+            else:
+                return Response({"status": status.HTTP_400_BAD_REQUEST, "success": False, "message": data_backup_serializers.errors})                
+        except Exception as e:
+            return JsonResponse({"status":status.HTTP_501_NOT_IMPLEMENTED,"success":False,"message":e.args[0]})
+        
+#select * from public."testApp_call";
+#select row_to_json(row(id,remarks)) from public."testApp_call";
+#select row_to_json(call_alias) from (select id,remarks from public."testApp_call" ) call_alias;
+#
+#select array_to_json(array_agg(row_to_json(call_alias))) from (select * from public."testApp_call") call_alias;

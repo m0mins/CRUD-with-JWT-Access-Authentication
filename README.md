@@ -23,4 +23,5 @@
 8. Others user only can Read the tasks
 9. Here has been added pagination
 10. When someone trying to see the list of tasks , of course has to provide page and limit in params
- 
+11. Database Migration Script
+12. And Also have sql query to convert postgresql data to json data format
